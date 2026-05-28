@@ -1,0 +1,7 @@
+node_modules
+dist
+docs
+resources/references.json.gz
+resources/example-*.json
+*.md
+.git

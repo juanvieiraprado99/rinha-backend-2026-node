@@ -1,0 +1,25 @@
+{
+  "name": "rinha-2026-fraud-fastify",
+  "version": "1.0.0",
+  "description": "Rinha de Backend 2026 - detecção de fraude por busca vetorial (Node + Fastify + TypeScript, IVF + uint8)",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:index": "node --max-old-space-size=2048 dist/scripts/build-index.js",
+    "start": "node dist/src/server.js",
+    "test": "node --test \"dist/test/**/*.test.js\""
+  },
+  "dependencies": {
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/stream-json": "^1.7.8",
+    "stream-json": "^1.8.0",
+    "typescript": "^5.7.0"
+  }
+}
