@@ -1,7 +1,7 @@
 services:
   api01: &api
     build: .
-    image: ghcr.io/juanvieiraprado99/rinha2026-fraud:latest
+    image: ghcr.io/juanvieiraprado99/rinha-backend-2026-node:latest
     environment:
       - PORT=9999
       - NPROBE=24
