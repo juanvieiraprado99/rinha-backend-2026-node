@@ -27,7 +27,9 @@ const mccRisk: MccRisk = JSON.parse(
 const index = loadIndex(INDEX_PATH);
 const search = createSearcher(index, { nprobe: NPROBE });
 
-const app = Fastify({ logger: false });
+// bodyLimit pequeno: payload de fraude é ~600 bytes; 16KB cobre folga e evita
+// alocações grandes sob carga (reduz pressão de memória no limite de 155MB).
+const app = Fastify({ logger: false, bodyLimit: 16 * 1024 });
 
 // reusa o buffer do vetor por request (single-thread, sem reentrância no handler sync)
 const qvec = new Float64Array(DIM);

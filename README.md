@@ -32,11 +32,11 @@ tsconfig.json, docker-compose.yml, nginx.conf, Dockerfile
 ```bash
 npm install
 
-# 1) compilar TS -> dist/
-npm run build
+# 1) baixar o dataset (uma vez) -> resources/references.json.gz (~16MB)
+npm run fetch:dataset          # DATASET_URL configurável (default = repo oficial)
 
-# 2) baixar o dataset (uma vez) em resources/references.json.gz
-#    (do repo oficial: resources/references.json.gz)
+# 2) compilar TS -> dist/
+npm run build
 
 # 3) gerar o índice (usa dist/, requer build antes)
 npm run build:index            # -> resources/index.bin
@@ -45,7 +45,7 @@ npm run build:index            # -> resources/index.bin
 npm test
 
 # 5) validar recall do IVF vs brute force (ajustar NPROBE)
-node dist/scripts/eval-recall.js   # EVAL_M e NPROBE configuráveis por env
+npm run eval:recall            # EVAL_M e NPROBE configuráveis por env
 
 # 6) subir tudo (build multi-stage compila o TS dentro da imagem)
 docker compose up --build
@@ -53,6 +53,24 @@ curl http://localhost:9999/ready
 curl -X POST http://localhost:9999/fraud-score -H 'content-type: application/json' \
   -d @<(node -e "console.log(JSON.stringify(require('./resources/example-payloads.json')[0]))")
 ```
+
+## Reprodutibilidade e build da imagem
+
+`references.json.gz` e `index.bin` **não** ficam no git (gitignored por tamanho). A imagem
+publicada em `ghcr.io/juanvieiraprado99/rinha-backend-2026-node:latest` já traz o `index.bin`
+embutido (auto-contida — não precisa do dataset em runtime).
+
+Para reconstruir a imagem do zero:
+
+```bash
+npm run fetch:dataset && npm run build && npm run build:index
+docker buildx build --platform linux/amd64 \
+  -t ghcr.io/juanvieiraprado99/rinha-backend-2026-node:latest --push .
+```
+
+O workflow `.github/workflows/build.yml` automatiza esse fluxo a cada push na `main` (fetch →
+build → index → buildx amd64 → push GHCR), garantindo que a imagem `:latest` da branch
+`submission` esteja sempre alinhada ao código. Requer o package GHCR **público**.
 
 ## Tuning
 

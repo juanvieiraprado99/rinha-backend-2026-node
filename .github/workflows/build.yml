@@ -1,0 +1,62 @@
+name: build-and-push
+
+# Builda o índice e publica a imagem amd64 no GHCR a cada push na main,
+# mantendo o :latest (usado pela branch submission) alinhado ao código.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/rinha-backend-2026-node
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Fetch dataset
+        env:
+          # Sobrescreva com a URL real do references.json.gz se o default (raw GitHub)
+          # devolver um pointer git-lfs. Configure em Settings > Variables (repo).
+          DATASET_URL: ${{ vars.DATASET_URL }}
+        run: npm run fetch:dataset
+
+      - name: Compile + build index
+        run: |
+          npm run build
+          npm test
+          npm run build:index
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push (linux/amd64)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}

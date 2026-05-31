@@ -22,15 +22,20 @@ const M = Number(process.env.EVAL_M || 300);
 const NPROBE = Number(process.env.NPROBE || 24);
 const EXPECTED_N = 3_000_000;
 
+// selfIdx: índice da própria query no dataset, ignorado para evitar viés de self-match
+// (a query é um ponto do dataset, então ela mesma estaria a distância 0 de si — isso
+// inflaria o recall. Pular reproduz o cenário de uma query nova, fora do dataset).
 function bruteForceScore(
   vectors: Float32Array,
   labels: Uint8Array,
   n: number,
   q: Float64Array,
+  selfIdx: number,
 ): number {
   const d5 = [Infinity, Infinity, Infinity, Infinity, Infinity];
   const f5 = [0, 0, 0, 0, 0];
   for (let p = 0; p < n; p++) {
+    if (p === selfIdx) continue;
     const b = p * DIM;
     let d = 0;
     for (let i = 0; i < DIM; i++) {
@@ -87,7 +92,10 @@ async function main(): Promise<void> {
     const p = (Math.random() * n) | 0;
     const base = p * DIM;
     for (let i = 0; i < DIM; i++) q[i] = vectors[base + i];
-    const exact = bruteForceScore(vectors, labels, n, q);
+    // ground-truth ignora o próprio ponto (query nova não está no dataset).
+    // Resíduo: o IVF ainda tem o ponto no index (quantizado, erro ~0.0075), então
+    // pode incluí-lo como vizinho — leve viés otimista, bem menor que o self-match dist-0.
+    const exact = bruteForceScore(vectors, labels, n, q, p);
     const ivf = search(q);
     if (exact === ivf) agree++;
     if ((exact < 0.6) === (ivf < 0.6)) approveMatch++;

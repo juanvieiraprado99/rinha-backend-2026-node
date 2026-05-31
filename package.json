@@ -8,8 +8,10 @@
     "node": ">=22"
   },
   "scripts": {
+    "fetch:dataset": "node scripts/fetch-dataset.mjs",
     "build": "tsc",
     "build:index": "node --max-old-space-size=2048 dist/scripts/build-index.js",
+    "eval:recall": "node --max-old-space-size=2048 dist/scripts/eval-recall.js",
     "start": "node dist/src/server.js",
     "test": "node --test \"dist/test/**/*.test.js\""
   },
